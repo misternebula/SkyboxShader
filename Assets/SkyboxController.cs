@@ -5,8 +5,23 @@ using UnityEngine;
 
 public class SkyboxController : MonoBehaviour
 {
-	[Range(0.00f, 24.00f)]
-	public float TimeOfDay;
+	[Range(1950, 2050)]
+	public int YEAR;
+
+	[Range(1, 12)]
+	public int MONTH;
+
+	[Range(1, 31)]
+	public int DAY;
+
+	[Range(0, 23)]
+	public int HOUR;
+
+	[Range(0, 60)]
+	public int MIN;
+
+	[Range(0, 60)]
+	public int SEC;
 
 	[Header("Sun")]
 	public Transform SunPivot;
@@ -34,7 +49,7 @@ public class SkyboxController : MonoBehaviour
 
 	private void UpdateSettings()
 	{
-		var (elevation, azimuth) = GetSolarElevationAzimuth(TimeOfDay);
+		var (elevation, azimuth) = GetSolarElevationAzimuth(YEAR, MONTH, DAY, HOUR, MIN, SEC, 51.5, 0);
 
 		SkyboxMaterial.SetColor("_HorizonColor", SkyboxHorizonGradient.Evaluate(GetRepeatEvaluate(elevation)));
 		SkyboxMaterial.SetColor("_BaseSkyColor", SkyboxSkyGradient.Evaluate(GetRepeatEvaluate(elevation)));
@@ -67,62 +82,135 @@ public class SkyboxController : MonoBehaviour
 		return 1 - (val / 180);
 	}
 
-	private (double elevation, double azimuth) GetSolarElevationAzimuth(float timeOfDay)
+	private (double elevation, double azimuth) GetSolarElevationAzimuth(int year, int month, int day, int hour, int min, int sec, double lat, double longitude)
 	{
 		// Based on R code from https://stackoverflow.com/questions/8708048, which is based on
 		// Michalsky, J.J. 1988. The Astronomical Almanac's algorithm for approximate solar position (1950-2050). Solar Energy. 40(3):227-235.
 
-		// simplified down to constants for the date of 1st August 2022, at Lat:51.5 Long:0
+		const double twopi = Math.PI * 2;
+		const double deg2rad = Math.PI / 180;
 
-		const double TAU = Math.PI * 2;
+		// Get day of year
+		var monthdays = new int[] { 0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30 };
+		for (var i = 1; i <= month; i++)
+		{
+			day += monthdays[i - 1];
+		}
+		var leapdays = year % 4 == 0 & (year % 400 == 0 | year % 100 != 0) & day >= 60 & !(year == 2 & day == 60);
+		if (leapdays)
+		{
+			day++;
+		}
 
-		// get julian date
-		var time = 8247.5 + (timeOfDay / 24);
+		// Get Julian date - 2400000
+		var hourFRAC = hour + (min / 60f) + (sec / 36000f); // hour plus fraction
+		var delta = year - 1949;
+		var leap = Math.Truncate(delta / 4f); // former leapyears
+		var jd = 32916.5f + (delta * 365) + leap + day + (hourFRAC / 24);
+
+		// The input to the Atronomer's almanach is the difference between
+		// the Julian date and JD 2451545.0 (noon, 1 January 2000)
+		var time = jd - 51545;
+
+		// Ecliptic coordinates
+
+		// Mean longitude
+		var mnlong = 280.460 + (0.9856474 * time);
+		mnlong %= 360;
+		if (mnlong < 0)
+		{
+			mnlong += 360;
+		}
+
+		// Mean anomoly
+		var mnanom = 357.528 + (0.9856003 * time);
+		mnanom %= 360;
+		if (mnanom < 0)
+		{
+			mnanom += 360;
+		}
+		mnanom *= deg2rad;
+
+		// Ecliptic longitude and obliquity of ecliptic
+		var eclong = mnlong + (1.915 * Math.Sin(mnanom)) + (0.020 * Math.Sin(2 * mnanom));
+		eclong %= 360;
+		if (eclong < 0)
+		{
+			eclong += 360;
+		}
+		var oblqec = 23.439 - (0.0000004 * time);
+		eclong *= deg2rad;
+		oblqec *= deg2rad;
 
 		// Celestial coordinates
-		var rightAscension = 2.3;
-		var declination = 17.85 * Mathf.Deg2Rad;
+		// Right ascension and declination
+		var num = Math.Cos(oblqec) * Math.Sin(eclong);
+		var den = Math.Cos(eclong);
+		var ra = Math.Atan(num / den);
+		if (den < 0)
+		{
+			ra += Math.PI;
+		}
+		if (den >= 0 && num < 0)
+		{
+			ra += twopi;
+		}
+		var dec = Math.Asin(Math.Sin(oblqec) * Math.Sin(eclong));
 
-		// local coords
-		// greenwich mean siderial time
-		var gmst = 6.697375 + (.0657098242 * time) + timeOfDay;
+		// Local coordinates
+		// Greenwich mean sidereal time
+		var gmst = 6.697375 + (.0657098242 * time) + hourFRAC;
 		gmst %= 24;
 		if (gmst < 0)
 		{
 			gmst += 24;
 		}
 
-		gmst = gmst * 15 * Mathf.Deg2Rad;
-
-		// hour angle
-		var hourAngle = gmst - rightAscension;
-		if (hourAngle < -Math.PI)
+		// Local mean sidereal time
+		var lmst = gmst + (longitude / 15);
+		lmst %= 24;
+		if (lmst < 0)
 		{
-			hourAngle += TAU;
+			lmst += 24;
+		}
+		lmst = lmst * 15 * deg2rad;
+
+		// Hour angle
+		var ha = lmst - ra;
+		if (ha < -Math.PI)
+		{
+			ha += twopi;
+		}
+		if (ha > Math.PI)
+		{
+			ha -= twopi;
 		}
 
-		if (hourAngle > Math.PI)
-		{
-			hourAngle -= TAU;
-		}
+		// Latitude to radians
+		lat *= deg2rad;
 
-		// azimuth and elevation
-		var elevation = Math.Asin((Math.Sin(declination) * 0.782608) + (Math.Cos(declination) * 0.622515 * Math.Cos(hourAngle)));
-		var azimuth = Math.Asin(-Math.Cos(declination) * Math.Sin(hourAngle) / Math.Cos(elevation));
+		// Azimuth and elevation
+		var el = Math.Asin((Math.Sin(dec) * Math.Sin(lat)) + (Math.Cos(dec) * Math.Cos(lat) * Math.Cos(ha)));
+		var az = Math.Asin(-Math.Cos(dec) * Math.Sin(ha) / Math.Cos(el));
 
-		var cosAzPos = 0 <= Math.Sin(declination) - (Math.Sin(elevation) * 0.782608);
-		var sinAzNeg = Math.Sin(azimuth) < 0;
+		// For logic and names, see Spencer, J.W. 1989. Solar Energy. 42(4):353
+		var cosAzPos = 0 <= Math.Sin(dec) - (Math.Sin(el) * Math.Sin(lat));
+		var sinAzNeg = Math.Sin(az) < 0;
+
 		if (cosAzPos && sinAzNeg)
 		{
-			azimuth += TAU;
+			az += twopi;
 		}
 
 		if (!cosAzPos)
 		{
-			azimuth = Math.PI - azimuth;
+			az = Math.PI - az;
 		}
 
-		return (elevation, azimuth);
+		//el = el / deg2rad;
+		//az = az / deg2rad;
+
+		return (el, az);
 	}
 
 	private void OnDrawGizmosSelected()
@@ -131,15 +219,18 @@ public class SkyboxController : MonoBehaviour
 		var listOfColors = new List<Color>();
 		for (var i = 0; i <= 24; i++)
 		{
-			var (elevation, azimuth) = GetSolarElevationAzimuth(i);
+			for (var j = 1; j < 60; j++)
+			{
+				var (elevation, azimuth) = GetSolarElevationAzimuth(YEAR, MONTH, DAY, i, j, SEC, 51.5, 0);
 
-			var sunDirection = new Vector3(
-			(float)Math.Cos(elevation) * (float)Math.Cos(azimuth),
-			(float)Math.Sin(elevation),
-			(float)Math.Cos(elevation) * (float)Math.Sin(azimuth)) * 10000;
+				var sunDirection = new Vector3(
+				(float)Math.Cos(elevation) * (float)Math.Cos(azimuth),
+				(float)Math.Sin(elevation),
+				(float)Math.Cos(elevation) * (float)Math.Sin(azimuth)) * 10000;
 
-			listOfPoints.Add(transform.position + sunDirection);
-			listOfColors.Add(SunGradient.Evaluate(GetRepeatEvaluate(elevation)).HdrToRgb());
+				listOfPoints.Add(transform.position + sunDirection);
+				listOfColors.Add(SunGradient.Evaluate(GetRepeatEvaluate(elevation)).HdrToRgb());
+			}
 		}
 
 		for (int i = 0; i < listOfPoints.Count - 1; i++)
@@ -148,7 +239,7 @@ public class SkyboxController : MonoBehaviour
 			Gizmos.DrawLine(listOfPoints[i], listOfPoints[i + 1]);
 		}
 
-		var (currentEl, currentAz) = GetSolarElevationAzimuth(TimeOfDay);
+		var (currentEl, currentAz) = GetSolarElevationAzimuth(YEAR, MONTH, DAY, HOUR, MIN, SEC, 51.5, 0);
 		var currentSunDirection = new Vector3(
 			(float)Math.Cos(currentEl) * (float)Math.Cos(currentAz),
 			(float)Math.Sin(currentEl),

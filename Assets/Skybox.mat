@@ -82,10 +82,10 @@ Material:
     - _UVSec: 0
     - _ZWrite: 1
     m_Colors:
-    - _BaseSkyColor: {r: 0, g: 0.34684148, b: 0.56937885, a: 1}
+    - _BaseSkyColor: {r: 0, g: 0.56533843, b: 0.9245361, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 1, g: 0, b: 0, a: 1}
-    - _HorizonColor: {r: 1, g: 0.7637135, b: 0.383067, a: 1}
+    - _HorizonColor: {r: 1, g: 0.93248314, b: 0.8237165, a: 1}
     - _MoonColor: {r: 0.7490196, g: 0.7490196, b: 0.7490196, a: 1}
     - _StarColor1: {r: 1, g: 0.06666667, b: 0, a: 1}
     - _StarColor2: {r: 1, g: 0.79607844, b: 0.062745094, a: 1}
