@@ -7,10 +7,10 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Skybox
-  m_Shader: {fileID: 4800000, guid: 8dbea34b444a6f2449eb75e278bfdc5c, type: 3}
-  m_ShaderKeywords: _EMISSION
-  m_LightmapFlags: 1
+  m_Name: Ground Material
+  m_Shader: {fileID: 4800000, guid: adde44ab46101744d87996ecbe9dbed2, type: 3}
+  m_ShaderKeywords: _NORMALMAP
+  m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: -1
@@ -20,7 +20,7 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _BumpMap:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: 114964dd3fbf8944dab5d48fb6ae0798, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _DetailAlbedoMap:
@@ -40,7 +40,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: f9161c6c9e06dc445ada3ee16d991f90, type: 3}
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:
@@ -60,35 +60,19 @@ Material:
     - _Cutoff: 0.5
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
-    - _GlossMapScale: 1
-    - _Glossiness: 1
+    - _GlossMapScale: 0
+    - _Glossiness: 0
     - _GlossyReflections: 1
-    - _Metallic: 1
+    - _MapScale: 1
+    - _Metallic: 0
     - _Mode: 0
-    - _MoonSize: 0.04
-    - _MoonSmooth: 0.01
     - _OcclusionStrength: 1
     - _Parallax: 0.02
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
-    - _StarColor2Value: 0.19
-    - _StarColor3Value: 0.65
-    - _StarScale: 75
-    - _StarSmoothstepMax: 0.5
-    - _StarSmoothstepMin: 0
-    - _SunSize: 0.04
-    - _SunSmooth: 0.02
     - _UVSec: 0
     - _ZWrite: 1
     m_Colors:
-    - _BaseSkyColor: {r: 0.06687322, g: 0.10978186, b: 0.13388258, a: 1}
-    - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _EmissionColor: {r: 1, g: 0, b: 0, a: 1}
-    - _HorizonColor: {r: 0.030714273, g: 0.033571422, b: 0.08500001, a: 1}
-    - _MoonColor: {r: 0.7490196, g: 0.7490196, b: 0.7490196, a: 1}
-    - _StarColor1: {r: 1, g: 0.06666667, b: 0, a: 1}
-    - _StarColor2: {r: 1, g: 0.79607844, b: 0.062745094, a: 1}
-    - _StarColor3: {r: 1, g: 1, b: 1, a: 1}
-    - _StarColor4: {r: 0, g: 0.52156866, b: 1, a: 1}
-    - _SunColor: {r: 23.968628, g: 13.627375, b: 6.130401, a: 1}
+    - _Color: {r: 0.7607843, g: 0.69803923, b: 0.5019608, a: 1}
+    - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
