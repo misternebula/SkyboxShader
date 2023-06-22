@@ -140,9 +140,7 @@
 
 				// moon
 				dotProduct = dot(-normViewDir, normalize(_MoonDirection));
-
 				float stepValue = 1 - step(_MoonSize, acos(dotProduct));
-
 				float4 moonOverlay = float4(stepValue.xxx, 0);
 
 				if (stepValue == 1)
@@ -152,18 +150,20 @@
 
 				if (all(moonOverlay != float4(0, 0, 0, 0)))
 				{
+					// generate fake normals for the moon based on distance from the center
 					float3 moonToCamera = normalize(-_MoonDirection);
 					float3 moonToFrag = normalize(-normViewDir - normalize(_MoonDirection));
-
 					float angle = acos(dotProduct) / _MoonSize;
-
 					float3 lerpedVector = lerp(moonToCamera, moonToFrag, angle);
 
+					// fake lighting
 					moonOverlay.xyz = clamp(dot(_SunDirection, lerpedVector), 0, 1);
 				}
 
+				// blend based on alpha so that the moon can cover the sun
 				float4 blendedSunAndMoon = float4(lerp(sunOverlay, moonOverlay, moonOverlay.a).xyz, clamp(moonOverlay.a + sunOverlay.a, 0, 1));
 
+				// blend based on alpha so that the moon can cover the stars
 				float4 blendedStarsSunMoon = float4(lerp(stars, blendedSunAndMoon, blendedSunAndMoon.a).xyz, 1);
 
 				return blendedStarsSunMoon + baseColor;
